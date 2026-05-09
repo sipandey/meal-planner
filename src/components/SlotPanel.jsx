@@ -3,21 +3,21 @@ import { TAG_META } from '../data'
 const ALL_TAGS = ['all', 'cooling', 'summer', 'fibre', 'quick', 'sattu', 'soya', 'paneer', 'oats', 'chaas', 'chana', 'flexi']
 
 const TAG_COLORS = {
-  cooling:  { bg: '#e0f2fe', text: '#0369a1' },
-  summer:   { bg: '#e0f7ff', text: '#0e7490' },
-  fibre:    { bg: '#dcfce7', text: '#166534' },
-  quick:    { bg: '#f3f4f6', text: '#4b5563' },
-  oats:     { bg: '#fef3c7', text: '#92400e' },
-  sattu:    { bg: '#ccfbf1', text: '#115e59' },
-  soya:     { bg: '#ede9fe', text: '#5b21b6' },
-  paneer:   { bg: '#fce7f3', text: '#9d174d' },
-  chaas:    { bg: '#e0f2fe', text: '#075985' },
-  chana:    { bg: '#fef9c3', text: '#713f12' },
-  flexi:    { bg: '#fee2e2', text: '#9f1239' },
+  cooling:  { bg: '#dceef5', text: '#1a5c70' },
+  summer:   { bg: '#fdf0cc', text: '#7a5500' },
+  fibre:    { bg: '#d8f0d0', text: '#2a5e24' },
+  quick:    { bg: '#ede8e0', text: '#5a5040' },
+  oats:     { bg: '#fde8c0', text: '#8a5500' },
+  sattu:    { bg: '#d0ece2', text: '#1a5840' },
+  soya:     { bg: '#e0ecd8', text: '#3a6028' },
+  paneer:   { bg: '#fde0d0', text: '#8a3820' },
+  chaas:    { bg: '#d0e8f5', text: '#1a5870' },
+  chana:    { bg: '#fdf0c0', text: '#7a5c00' },
+  flexi:    { bg: '#fde0d8', text: '#8a3028' },
 }
 
 function Tag({ tag }) {
-  const c = TAG_COLORS[tag] || { bg: '#f3f4f6', text: '#4b5563' }
+  const c = TAG_COLORS[tag] || { bg: '#ede8e0', text: '#5a5040' }
   return (
     <span style={{
       fontSize: 10, fontWeight: 600, borderRadius: 99,
@@ -38,10 +38,10 @@ function MacroBadge({ label, value, unit = 'g', color }) {
 }
 
 const MACRO_COLORS = {
-  protein: { bg: '#ede9fe', text: '#5b21b6' },
-  fibre:   { bg: '#dcfce7', text: '#166534' },
-  carbs:   { bg: '#fef3c7', text: '#92400e' },
-  kcal:    { bg: '#f3f4f6', text: '#4b5563' },
+  protein: { bg: '#d8f0d0', text: '#1b4332' },
+  fibre:   { bg: '#d0ece2', text: '#1a5840' },
+  carbs:   { bg: '#fde8c0', text: '#7a4f00' },
+  kcal:    { bg: '#ede8e0', text: '#5a5040' },
 }
 
 export default function SlotPanel({ slot, options, picked, filters, setFilters, onPick }) {
@@ -59,22 +59,22 @@ export default function SlotPanel({ slot, options, picked, filters, setFilters, 
     <div>
       {/* Slot header */}
       <div style={{
-        background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12,
+        background: '#fff', border: '1px solid #e8dfd0', borderRadius: 12,
         padding: '14px 18px', marginBottom: 16
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
           <div>
             <span style={{ fontSize: 20, marginRight: 8 }}>{slot.emoji}</span>
-            <span style={{ fontSize: 16, fontWeight: 600, color: '#1a1a1a' }}>{slot.label}</span>
-            <span style={{ fontSize: 13, color: '#888', marginLeft: 8 }}>{slot.time}</span>
+            <span style={{ fontSize: 16, fontWeight: 600, color: '#1c2b1c' }}>{slot.label}</span>
+            <span style={{ fontSize: 13, color: '#8a9a8a', marginLeft: 8 }}>{slot.time}</span>
           </div>
-          <span style={{ fontSize: 12, color: '#888' }}>{filtered.length} of {options.length} options</span>
+          <span style={{ fontSize: 12, color: '#8a9a8a' }}>{filtered.length} of {options.length} options</span>
         </div>
-        <div style={{ display: 'flex', gap: 16, fontSize: 11, color: '#666' }}>
-          <span>Target: <b style={{ color: '#5b21b6' }}>{slot.target.p[0]}–{slot.target.p[1]}g protein</b></span>
-          <span><b style={{ color: '#166534' }}>{slot.target.f[0]}–{slot.target.f[1]}g fibre</b></span>
-          <span><b style={{ color: '#92400e' }}>{slot.target.c[0]}–{slot.target.c[1]}g carbs</b></span>
-          <span><b style={{ color: '#555' }}>{slot.target.k[0]}–{slot.target.k[1]} kcal</b></span>
+        <div style={{ display: 'flex', gap: 16, fontSize: 11, color: '#5a6b5a' }}>
+          <span>Target: <b style={{ color: '#2d6a4f' }}>{slot.target.p[0]}–{slot.target.p[1]}g protein</b></span>
+          <span><b style={{ color: '#3a7a30' }}>{slot.target.f[0]}–{slot.target.f[1]}g fibre</b></span>
+          <span><b style={{ color: '#8a5500' }}>{slot.target.c[0]}–{slot.target.c[1]}g carbs</b></span>
+          <span><b style={{ color: '#5a5040' }}>{slot.target.k[0]}–{slot.target.k[1]} kcal</b></span>
         </div>
       </div>
 
@@ -85,17 +85,18 @@ export default function SlotPanel({ slot, options, picked, filters, setFilters, 
           onChange={e => setFilters(f => ({ ...f, search: e.target.value }))}
           placeholder="Search..."
           style={{
-            padding: '6px 12px', borderRadius: 8, border: '1px solid #e0e0e0',
-            fontSize: 12, outline: 'none', width: 160, background: '#fff'
+            padding: '6px 12px', borderRadius: 8, border: '1px solid #e8dfd0',
+            fontSize: 12, outline: 'none', width: 160, background: '#fff',
+            color: '#1c2b1c'
           }}
         />
         <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
           {availableTags.map(t => (
             <button key={t} onClick={() => setFilters(f => ({ ...f, tag: t }))} style={{
               padding: '4px 12px', borderRadius: 99, fontSize: 11, fontWeight: 500,
-              border: tag === t ? '1.5px solid #6d28d9' : '1px solid #e0e0e0',
-              background: tag === t ? '#6d28d9' : '#fff',
-              color: tag === t ? '#fff' : '#555',
+              border: tag === t ? '1.5px solid #2d6a4f' : '1px solid #e8dfd0',
+              background: tag === t ? '#2d6a4f' : '#fff',
+              color: tag === t ? '#fff' : '#5a6b5a',
               cursor: 'pointer'
             }}>
               {t === 'all' ? 'All' : t}
@@ -114,8 +115,8 @@ export default function SlotPanel({ slot, options, picked, filters, setFilters, 
               key={i}
               onClick={() => onPick(realIdx)}
               style={{
-                background: isSelected ? '#f5f3ff' : '#fff',
-                border: isSelected ? '2px solid #6d28d9' : '1px solid #e5e7eb',
+                background: isSelected ? '#edf5ea' : '#fff',
+                border: isSelected ? '2px solid #2d6a4f' : '1px solid #e8dfd0',
                 borderRadius: 12, padding: '12px 14px',
                 cursor: 'pointer', transition: 'all 0.15s',
                 position: 'relative'
@@ -125,14 +126,14 @@ export default function SlotPanel({ slot, options, picked, filters, setFilters, 
                 <div style={{
                   position: 'absolute', top: 10, right: 10,
                   width: 18, height: 18, borderRadius: '50%',
-                  background: '#6d28d9', color: '#fff',
+                  background: '#2d6a4f', color: '#fff',
                   fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontWeight: 700
                 }}>✓</div>
               )}
               <div style={{
                 fontSize: 13, fontWeight: 600, marginBottom: 5, lineHeight: 1.35,
-                color: isSelected ? '#3730a3' : '#1a1a1a',
+                color: isSelected ? '#1b4332' : '#1c2b1c',
                 paddingRight: isSelected ? 24 : 0
               }}>{o.name}</div>
 
@@ -142,7 +143,7 @@ export default function SlotPanel({ slot, options, picked, filters, setFilters, 
                 </div>
               )}
 
-              <div style={{ fontSize: 11, color: '#666', lineHeight: 1.55, marginBottom: 8 }}>
+              <div style={{ fontSize: 11, color: '#6a7a6a', lineHeight: 1.55, marginBottom: 8 }}>
                 {o.detail}
               </div>
 
@@ -158,9 +159,9 @@ export default function SlotPanel({ slot, options, picked, filters, setFilters, 
       </div>
 
       {filtered.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '32px 0', color: '#aaa', fontSize: 13 }}>
+        <div style={{ textAlign: 'center', padding: '32px 0', color: '#9aaa99', fontSize: 13 }}>
           No options match your filter. <button onClick={() => setFilters({ tag: 'all', search: '' })}
-            style={{ color: '#6d28d9', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13 }}>
+            style={{ color: '#2d6a4f', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13 }}>
             Clear filters
           </button>
         </div>

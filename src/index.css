@@ -1,4 +1,4 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: system-ui, -apple-system, sans-serif; background: #f8f9fa; }
+body { font-family: system-ui, -apple-system, sans-serif; background: #f6f3ee; color: #1c2b1c; }
 button { font-family: inherit; }
 input { font-family: inherit; }
