@@ -29,7 +29,7 @@ export default function App() {
   const pickedCount = Object.values(picks).filter(v => v !== null).length
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f8f9fa', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: '#f6f3ee', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
       <Header showConstraints={showConstraints} setShowConstraints={setShowConstraints} />
       {showConstraints && <ConstraintsPanel onClose={() => setShowConstraints(false)} />}
 
@@ -37,8 +37,8 @@ export default function App() {
         {/* Slot tabs */}
         <div style={{
           display: 'flex', gap: 8, flexWrap: 'wrap', padding: '16px 0',
-          position: 'sticky', top: 56, background: '#f8f9fa', zIndex: 9,
-          borderBottom: '1px solid #eee'
+          position: 'sticky', top: 56, background: '#f6f3ee', zIndex: 9,
+          borderBottom: '1px solid #e8dfd0'
         }}>
           {SLOTS.map(s => {
             const hasPick = picks[s.id] !== null
@@ -47,9 +47,9 @@ export default function App() {
               <button key={s.id} onClick={() => setActiveSlot(s.id)} style={{
                 display: 'flex', alignItems: 'center', gap: 6,
                 padding: '7px 16px', borderRadius: 99, fontSize: 13, fontWeight: 500,
-                border: isActive ? '1.5px solid #6d28d9' : hasPick ? '1.5px solid #c4b5fd' : '1px solid #e0e0e0',
-                background: isActive ? '#6d28d9' : hasPick ? '#f5f3ff' : '#fff',
-                color: isActive ? '#fff' : hasPick ? '#5b21b6' : '#666',
+                border: isActive ? '1.5px solid #2d6a4f' : hasPick ? '1.5px solid #95c99d' : '1px solid #e8dfd0',
+                background: isActive ? '#2d6a4f' : hasPick ? '#edf5ea' : '#fff',
+                color: isActive ? '#fff' : hasPick ? '#2d6a4f' : '#5a6b5a',
                 cursor: 'pointer', transition: 'all 0.15s'
               }}>
                 <span>{s.emoji}</span>
@@ -58,7 +58,7 @@ export default function App() {
                 {hasPick && (
                   <span style={{
                     width: 6, height: 6, borderRadius: '50%',
-                    background: isActive ? 'rgba(255,255,255,0.8)' : '#7c3aed'
+                    background: isActive ? 'rgba(255,255,255,0.8)' : '#52b788'
                   }} />
                 )}
               </button>
