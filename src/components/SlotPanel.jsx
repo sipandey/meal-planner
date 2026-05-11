@@ -84,7 +84,7 @@ function ViolationBadge({ violations }) {
   )
 }
 
-export default function SlotPanel({ slot, options, picked, filters, setFilters, onPick, getViolations, aiSuggestion, aiLoading, aiError, onAISuggest }) {
+export default function SlotPanel({ slot, options, picked, filters, setFilters, onPick, getViolations, aiSuggestion, aiLoading, aiError, onAISuggest, isMobile }) {
   const { tag, search } = filters
 
   const filtered = options.filter(o => {
@@ -130,10 +130,10 @@ export default function SlotPanel({ slot, options, picked, filters, setFilters, 
             )}
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 16, fontSize: 11, color: '#5a6b5a' }}>
-          <span>Target: <b style={{ color: '#2d6a4f' }}>{slot.target.p[0]}–{slot.target.p[1]}g protein</b></span>
-          <span><b style={{ color: '#3a7a30' }}>{slot.target.f[0]}–{slot.target.f[1]}g fibre</b></span>
-          <span><b style={{ color: '#8a5500' }}>{slot.target.c[0]}–{slot.target.c[1]}g carbs</b></span>
+        <div style={{ display: 'flex', gap: 10, fontSize: 11, color: '#5a6b5a', flexWrap: 'wrap' }}>
+          <span>Target: <b style={{ color: '#2d6a4f' }}>{slot.target.p[0]}–{slot.target.p[1]}g P</b></span>
+          <span><b style={{ color: '#3a7a30' }}>{slot.target.f[0]}–{slot.target.f[1]}g F</b></span>
+          <span><b style={{ color: '#8a5500' }}>{slot.target.c[0]}–{slot.target.c[1]}g C</b></span>
           <span><b style={{ color: '#5a5040' }}>{slot.target.k[0]}–{slot.target.k[1]} kcal</b></span>
         </div>
       </div>
@@ -204,7 +204,7 @@ export default function SlotPanel({ slot, options, picked, filters, setFilters, 
       </div>
 
       {/* Option cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 10 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(240px, 1fr))', gap: 10 }}>
         {filtered.map((o, i) => {
           const realIdx = options.indexOf(o)
           const isSelected = picked === realIdx

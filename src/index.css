@@ -4,3 +4,16 @@
 body { font-family: system-ui, -apple-system, sans-serif; background: #f6f3ee; color: #1c2b1c; }
 button { font-family: inherit; }
 input { font-family: inherit; }
+select { font-family: inherit; }
+
+/* Hide scrollbar on slot tab row (keeps scrollability) */
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Prevent tap highlight on mobile buttons */
+button { -webkit-tap-highlight-color: transparent; }
+
+/* Safe area padding for notched phones */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .mobile-safe-bottom { padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
+}
