@@ -3,9 +3,11 @@ import { useUser } from '@clerk/clerk-react'
 import { useSupabase } from './useSupabase'
 import { SLOTS } from '../data'
 
-const INITIAL_PICKS = Object.fromEntries(SLOTS.map(s => [s.id, null])) as Record<string, number | null>
+export type Picks = Record<string, number | null>
 
-function todayISO() {
+export const INITIAL_PICKS: Picks = Object.fromEntries(SLOTS.map(s => [s.id, null]))
+
+export function todayISO(): string {
   return new Date().toISOString().split('T')[0]
 }
 
