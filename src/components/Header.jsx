@@ -1,6 +1,8 @@
 import { UserButton } from '@clerk/clerk-react'
+import { useNavigate } from 'react-router'
 
 export default function Header({ showConstraints, setShowConstraints, profile, targets, activeRulesCount }) {
+  const navigate = useNavigate()
   const city = profile?.city ?? 'India'
   const proteinLabel = targets
     ? `${targets.protein.min}–${targets.protein.max}g protein`
@@ -64,6 +66,20 @@ export default function Header({ showConstraints, setShowConstraints, profile, t
           }}
         >
           {showConstraints ? '✕ Rules' : '📋 Rules'}
+        </button>
+
+        {/* Settings */}
+        <button
+          onClick={() => navigate('/settings')}
+          title="Settings"
+          style={{
+            background: 'rgba(255,255,255,0.1)',
+            border: '1px solid rgba(255,255,255,0.28)',
+            color: '#fff', borderRadius: 8, padding: '5px 10px',
+            fontSize: 15, cursor: 'pointer', lineHeight: 1,
+          }}
+        >
+          ⚙️
         </button>
 
         {/* Clerk user button */}
