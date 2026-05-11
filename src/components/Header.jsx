@@ -1,3 +1,5 @@
+import { UserButton } from '@clerk/clerk-react'
+
 export default function Header({ showConstraints, setShowConstraints }) {
   return (
     <div style={{
@@ -22,7 +24,7 @@ export default function Header({ showConstraints, setShowConstraints }) {
         }}>
           <span>🎯 65–80g protein</span>
           <span>🌿 25–30g fibre</span>
-          <span>🌡️ Gurgaon summer</span>
+          <span>☀️ Gurgaon summer</span>
         </div>
         <button
           onClick={() => setShowConstraints(v => !v)}
@@ -35,6 +37,11 @@ export default function Header({ showConstraints, setShowConstraints }) {
         >
           {showConstraints ? '✕ Rules' : '📋 Rules'}
         </button>
+        <UserButton
+          appearance={{
+            variables: { colorPrimary: '#2d6a4f' },
+          }}
+        />
       </div>
     </div>
   )
