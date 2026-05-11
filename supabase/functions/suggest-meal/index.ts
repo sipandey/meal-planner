@@ -11,7 +11,7 @@
  * Auth: Clerk JWT in Authorization header (verified via Supabase RLS)
  */
 
-import { jwtVerify, createRemoteJWKSet } from 'https://esm.sh/jose@5'
+import { jwtVerify } from 'https://esm.sh/jose@5'
 
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions'
 const MODEL = 'gpt-4o-mini'              // fast + cheap for a single-slot suggestion
@@ -156,14 +156,12 @@ Deno.serve(async (req: Request) => {
     })
   }
 
+  // The Clerk "supabase" JWT template signs with HS256 using Supabase's JWT secret.
+  // SUPABASE_JWT_SECRET is injected automatically into every edge function.
   const token = authHeader.slice(7)
   try {
-    // Decode the JWT payload to extract the issuer (Clerk domain) dynamically
-    const payloadB64 = token.split('.')[1]
-    const payload    = JSON.parse(atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/')))
-    const issuer     = payload.iss as string          // e.g. https://balanced-piranha-14.clerk.accounts.dev
-    const JWKS       = createRemoteJWKSet(new URL(`${issuer}/.well-known/jwks.json`))
-    await jwtVerify(token, JWKS, { issuer })
+    const secret = new TextEncoder().encode(Deno.env.get('SUPABASE_JWT_SECRET')!)
+    await jwtVerify(token, secret)
   } catch (err) {
     console.error('JWT verification failed:', err)
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
