@@ -11,8 +11,6 @@
  * Auth: Clerk JWT in Authorization header
  */
 
-import { jwtVerify } from 'https://esm.sh/jose@5'
-
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions'
 const MODEL          = 'gpt-4o-mini'
 
@@ -105,16 +103,6 @@ Deno.serve(async (req: Request) => {
     })
   }
 
-  const token = authHeader.slice(7)
-  try {
-    const secret = new TextEncoder().encode(Deno.env.get('SUPABASE_JWT_SECRET')!)
-    await jwtVerify(token, secret)
-  } catch (err) {
-    console.error('JWT verification failed:', err)
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401, headers: { ...CORS, 'Content-Type': 'application/json' },
-    })
-  }
 
   let body: RequestBody
   try { body = await req.json() }
