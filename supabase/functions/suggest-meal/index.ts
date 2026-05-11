@@ -13,8 +13,8 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages'
-const MODEL = 'claude-haiku-4-5'          // fast + cheap for a single-slot suggestion
+const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions'
+const MODEL = 'gpt-4o-mini'              // fast + cheap for a single-slot suggestion
 
 // CORS headers for browser requests
 const CORS = {
@@ -185,46 +185,52 @@ Deno.serve(async (req: Request) => {
     })
   }
 
-  // ── Call Anthropic ─────────────────────────────────────────────
-  const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY')
-  if (!anthropicKey) {
-    return new Response(JSON.stringify({ error: 'ANTHROPIC_API_KEY not configured' }), {
+  // ── Call OpenAI ───────────────────────────────────────────────
+  const openaiKey = Deno.env.get('OPENAI_API_KEY')
+  if (!openaiKey) {
+    return new Response(JSON.stringify({ error: 'OPENAI_API_KEY not configured' }), {
       status: 500, headers: { ...CORS, 'Content-Type': 'application/json' },
     })
   }
 
   const prompt = buildPrompt(body)
 
-  const anthropicRes = await fetch(ANTHROPIC_API_URL, {
+  const openaiRes = await fetch(OPENAI_API_URL, {
     method: 'POST',
     headers: {
-      'x-api-key':         anthropicKey,
-      'anthropic-version': '2023-06-01',
-      'content-type':      'application/json',
+      'Authorization': `Bearer ${openaiKey}`,
+      'Content-Type':  'application/json',
     },
     body: JSON.stringify({
-      model:      MODEL,
-      max_tokens: 120,
-      messages: [{ role: 'user', content: prompt }],
+      model:           MODEL,
+      max_tokens:      120,
+      // response_format forces the model to return valid JSON every time
+      response_format: { type: 'json_object' },
+      messages: [
+        {
+          role:    'system',
+          content: 'You are Aahar\'s nutrition AI — an expert in Indian vegetarian nutrition. Always respond with valid JSON matching the exact format requested by the user.',
+        },
+        { role: 'user', content: prompt },
+      ],
     }),
   })
 
-  if (!anthropicRes.ok) {
-    const errText = await anthropicRes.text()
-    console.error('Anthropic API error:', errText)
+  if (!openaiRes.ok) {
+    const errText = await openaiRes.text()
+    console.error('OpenAI API error:', errText)
     return new Response(JSON.stringify({ error: 'AI service unavailable. Please try again.' }), {
       status: 502, headers: { ...CORS, 'Content-Type': 'application/json' },
     })
   }
 
-  const anthropicData = await anthropicRes.json()
-  const rawText: string = anthropicData.content?.[0]?.text ?? ''
+  const openaiData = await openaiRes.json()
+  const rawText: string = openaiData.choices?.[0]?.message?.content ?? ''
 
-  // Parse JSON from the model's response (strip any accidental markdown)
+  // Parse the JSON response (response_format: json_object guarantees valid JSON)
   let parsed: { index: number; reason: string }
   try {
-    const jsonMatch = rawText.match(/\{[\s\S]*\}/)
-    parsed = JSON.parse(jsonMatch?.[0] ?? rawText)
+    parsed = JSON.parse(rawText)
   } catch {
     console.error('Failed to parse AI response:', rawText)
     return new Response(JSON.stringify({ error: 'AI returned unexpected format' }), {
