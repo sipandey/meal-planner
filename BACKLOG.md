@@ -288,15 +288,9 @@ Users on mobile should be able to install the app and access their plan offline.
 ---
 
 ### FEAT-019 · Error monitoring & observability
-**Priority:** P1 · **Size:** S
+**Priority:** P3 · **Size:** S · **Status:** Deferred — not needed yet
 
-No visibility into production errors today.
-
-**Acceptance criteria:**
-- Sentry integrated for frontend JS errors; alerts on new issues.
-- Supabase / API errors are logged with user context (no PII in logs).
-- A simple `/health` endpoint returns DB connectivity status.
-- Error boundary in React catches render crashes and shows a friendly recovery UI.
+Deferred until the app has meaningful production traffic. React error boundary is still worth adding (no external dependency).
 
 ---
 
@@ -314,22 +308,9 @@ Needed for managing global meal options, reviewing users, and operational tasks.
 ---
 
 ### FEAT-021 · Analytics instrumentation
-**Priority:** P2 · **Size:** S
+**Priority:** P3 · **Size:** S · **Status:** Deferred — not needed yet
 
-Understand how users actually use the app to inform roadmap prioritisation.
-
-**Events to track:**
-- `plan_created` (date, slots_filled, total_kcal)
-- `meal_picked` (slot_id, option_name, is_custom)
-- `filter_used` (tag, slot_id)
-- `grocery_list_generated`
-- `template_applied`
-- `share_link_created`
-
-**Acceptance criteria:**
-- PostHog (self-hosted or cloud) for event tracking.
-- No PII in events.
-- A/B testing infrastructure available but no active experiments in v1.
+Deferred until there are enough users to make the data meaningful.
 
 ---
 
@@ -365,7 +346,9 @@ If the product grows to serve nutritionists managing multiple clients, a workspa
 
 | Date | Decision | Rationale |
 |------|----------|-----------|
-| 2026-05-09 | Supabase chosen as backend | Postgres + Auth + realtime out of the box; zero infra ops for early stage |
-| 2026-05-09 | localStorage for M1 persistence before auth | Fastest path to stop data loss; replaced by DB in M2 |
+| 2026-05-09 | Supabase chosen as backend | Postgres + RLS + realtime; zero infra ops for early stage |
+| 2026-05-09 | Clerk chosen for auth (not Supabase Auth) | Better DX, pre-built UI components, Google OAuth, works cleanly with Supabase RLS via JWT |
+| 2026-05-09 | Persistence goes direct to Supabase in M1 (no localStorage step) | Clerk is being set up anyway; skip the localStorage interim step |
 | 2026-05-09 | Constraint engine is advisory (warnings), not blocking | Hard blocks create frustration; warnings educate without removing agency |
 | 2026-05-09 | No ML for suggestions in v1 | Linear scoring is good enough and auditable; revisit if suggestions adoption > 30% |
+| 2026-05-09 | Monitoring (Sentry) and analytics (PostHog) deferred | Not needed until meaningful traffic; revisit at M4 |

@@ -1,32 +1,39 @@
 import { useState, useMemo } from 'react'
-import { SLOTS, OPTIONS, CONSTRAINTS } from './data'
+import { SLOTS, OPTIONS } from './data'
 import SlotPanel from './components/SlotPanel'
 import Summary from './components/Summary'
 import Header from './components/Header'
 import ConstraintsPanel from './components/ConstraintsPanel'
-
-const INITIAL_PICKS = Object.fromEntries(SLOTS.map(s => [s.id, null]))
+import { useDayPlan } from './hooks/useDayPlan'
 
 export default function App() {
-  const [picks, setPicks] = useState(INITIAL_PICKS)
+  const { picks, pick, clearAll, isLoading, isSaving } = useDayPlan()
   const [activeSlot, setActiveSlot] = useState('wakeup')
   const [filters, setFilters] = useState({ tag: 'all', search: '' })
   const [showConstraints, setShowConstraints] = useState(false)
 
-  const pick = (slotId, idx) =>
-    setPicks(p => ({ ...p, [slotId]: p[slotId] === idx ? null : idx }))
-
   const totals = useMemo(() =>
     SLOTS.reduce((acc, s) => {
       const idx = picks[s.id]
-      if (idx !== null) {
+      if (idx !== null && idx !== undefined) {
         const o = OPTIONS[s.id][idx]
         acc.p += o.p; acc.f += o.f; acc.c += o.c; acc.k += o.k
       }
       return acc
     }, { p: 0, f: 0, c: 0, k: 0 }), [picks])
 
-  const pickedCount = Object.values(picks).filter(v => v !== null).length
+  const pickedCount = Object.values(picks).filter(v => v !== null && v !== undefined).length
+
+  if (isLoading) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#f6f3ee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center', color: '#6a7a6a' }}>
+          <div style={{ fontSize: 32, marginBottom: 8 }}>🌿</div>
+          <div style={{ fontSize: 13 }}>Loading your plan…</div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: '#f6f3ee', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
@@ -41,7 +48,7 @@ export default function App() {
           borderBottom: '1px solid #e8dfd0'
         }}>
           {SLOTS.map(s => {
-            const hasPick = picks[s.id] !== null
+            const hasPick = picks[s.id] !== null && picks[s.id] !== undefined
             const isActive = activeSlot === s.id
             return (
               <button key={s.id} onClick={() => setActiveSlot(s.id)} style={{
@@ -64,6 +71,11 @@ export default function App() {
               </button>
             )
           })}
+          {isSaving && (
+            <span style={{ fontSize: 11, color: '#8a9a8a', alignSelf: 'center', marginLeft: 4 }}>
+              saving…
+            </span>
+          )}
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 24, marginTop: 24, alignItems: 'start' }}>
@@ -80,7 +92,7 @@ export default function App() {
               picks={picks}
               totals={totals}
               pickedCount={pickedCount}
-              onClear={() => setPicks(INITIAL_PICKS)}
+              onClear={clearAll}
               onSlotClick={setActiveSlot}
             />
           </div>
