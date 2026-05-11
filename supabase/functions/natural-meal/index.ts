@@ -11,7 +11,7 @@
  * Auth: Clerk JWT in Authorization header
  */
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { jwtVerify, createRemoteJWKSet } from 'https://esm.sh/jose@5'
 
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions'
 const MODEL          = 'gpt-4o-mini'
@@ -99,19 +99,21 @@ Deno.serve(async (req: Request) => {
   }
 
   const authHeader = req.headers.get('Authorization')
-  if (!authHeader) {
+  if (!authHeader?.startsWith('Bearer ')) {
     return new Response(JSON.stringify({ error: 'Missing Authorization header' }), {
       status: 401, headers: { ...CORS, 'Content-Type': 'application/json' },
     })
   }
 
-  const supabase = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_ANON_KEY')!,
-    { global: { headers: { Authorization: authHeader } } },
-  )
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-  if (authError || !user) {
+  const token = authHeader.slice(7)
+  try {
+    const payloadB64 = token.split('.')[1]
+    const payload    = JSON.parse(atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/')))
+    const issuer     = payload.iss as string
+    const JWKS       = createRemoteJWKSet(new URL(`${issuer}/.well-known/jwks.json`))
+    await jwtVerify(token, JWKS, { issuer })
+  } catch (err) {
+    console.error('JWT verification failed:', err)
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401, headers: { ...CORS, 'Content-Type': 'application/json' },
     })
