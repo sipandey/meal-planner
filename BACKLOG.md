@@ -1,344 +1,497 @@
-# Meal Planner — Product Backlog
+# Aahar — Product Backlog
 
-> Maintained by: PM / Engineering lead
-> Last updated: 2026-05-09
-> Status legend: 🔴 Not started · 🟡 In progress · 🟢 Done
+> India's first AI nutritionist that speaks Indian food.
+> See `PRODUCT_VISION.md` for the full strategic brief.
 
----
-
-## Guiding Principles
-
-1. **Nutrition-first** — every feature serves the user's health goals, never obscures them.
-2. **Low friction** — picking a day's meals should take < 2 minutes.
-3. **Multi-user ready** — the data model and API must support isolated user accounts from day one.
-4. **Mobile-first** — the majority of meal planning happens on phones.
-5. **Offline-capable** — plans should survive spotty connectivity.
+Last updated: 2026-05-11
+Status legend: 🔴 Not started · 🟡 In progress · 🟢 Done
 
 ---
 
 ## Milestones
 
-| # | Milestone | Goal | Target |
-|---|-----------|------|--------|
-| M1 | Foundation | Persistence + auth + mobile layout | Sprint 1–2 |
-| M2 | Core Planning | Weekly view + constraint engine + grocery list | Sprint 3–4 |
-| M3 | Personalisation | User profiles + custom meals + smart suggestions | Sprint 5–6 |
-| M4 | Social & Growth | Sharing + nutritionist mode + analytics | Sprint 7–8 |
-| M5 | Scale & Ops | PWA + monitoring + admin + billing | Sprint 9–10 |
+| # | Milestone | Theme | Target |
+|---|-----------|-------|--------|
+| M0 | Infrastructure | Auth + persistence (done) | ✅ Complete |
+| M1 | Health Profile | Condition onboarding + constraint engine | Sprint 1–2 |
+| M2 | AI Core | Meal generator + family profiles | Sprint 3–4 |
+| M3 | Intelligence | Seasonal logic + Indian food database | Sprint 5–6 |
+| M4 | Clinical | Doctor reports + dietitian tools | Sprint 7–8 |
+| M5 | Growth | Grocery integration + sharing + scale | Sprint 9–10 |
 
 ---
 
-## M1 — Foundation
+## M0 — Infrastructure (Done ✅)
 
-### FEAT-001 · Day plan persistence (localStorage)
-**Priority:** P0 · **Size:** S
+| ID | Feature | Status |
+|----|---------|--------|
+| M0-001 | Earthy green theme rebrand | 🟢 Done |
+| M0-002 | React Router v7 + protected routes | 🟢 Done |
+| M0-003 | Clerk auth (sign-in, sign-up, UserButton) | 🟢 Done |
+| M0-004 | Supabase schema + RLS | 🟢 Done |
+| M0-005 | TanStack Query + optimistic persistence | 🟢 Done |
+| M0-006 | TypeScript config + Tailwind v4 | 🟢 Done |
 
-Current state: all picks reset on page refresh. Users lose their plan every time.
+---
+
+## M1 — Health Profile & Constraint Engine
+
+> Goal: The app understands *who* the user is and *what* their body needs.
+> No more generic 1400 kcal plan. Every plan is generated from the user's conditions.
+
+---
+
+### FEAT-101 · Health condition onboarding wizard
+**Priority:** P0 · **Size:** M · **Status:** 🔴
+
+The single most important feature. Replaces the current generic onboarding.
+This is what makes Aahar a medical-grade product, not a calorie counter.
+
+**Conditions to capture (v1):**
+- High LDL / cholesterol
+- Type 2 diabetes / pre-diabetes
+- PCOS
+- Hypothyroidism / hyperthyroidism
+- High uric acid / gout
+- Hypertension
+- Post-partum / breastfeeding
+- Active weight loss goal
+- Athletic / muscle gain goal
+- None (healthy, general wellness)
+
+**Also capture:**
+- City (for seasonal intelligence)
+- Diet type: vegetarian / vegan / non-vegetarian
+- Cooking time available: quick (<30 min) / normal / relaxed
 
 **Acceptance criteria:**
-- Picks survive a full page reload.
-- Clearing via the "Clear all" button also clears storage.
-- Graceful fallback if storage is unavailable (private browsing, quota exceeded).
+- 3-step wizard: (1) Who are you? (2) Your conditions, (3) Your household
+- Each condition shows a one-line plain-language explanation of what it means for food
+- Conditions stored in `profiles.conditions[]` in Supabase
+- Wizard can be revisited and updated from Settings at any time
+- Profile completeness shown as a % prompt in the header until done
 
 ---
 
-### FEAT-002 · User authentication
-**Priority:** P0 · **Size:** M
+### FEAT-102 · Condition → Constraint Engine (rule-based v1)
+**Priority:** P0 · **Size:** L · **Status:** 🔴
 
-Enable multi-user access. Each user sees only their own data.
+The core intelligence of Aahar. Translates health conditions into a
+personalized food rule set — automatically, without the user manually entering rules.
 
-**Approach:** Supabase Auth (email/password + Google OAuth).
+This is the IP. Every condition–food mapping must be clinically validated.
+
+**Condition rules (v1):**
+
+| Condition | Generated rules |
+|-----------|----------------|
+| High LDL | Walnuts daily (non-negotiable), 1 tbsp flaxseed in atta, soya max 4×/week no consecutive days, no cream/full-fat dairy, paneer max 2×/week low-fat only, chaas over lassi |
+| Type 2 Diabetes | Low-GI rotis (jowar/bajra preferred in season), dal before rice always, no fruit juice, khichdi on high-sugar-risk days, fibre target +20% |
+| PCOS | Anti-inflammatory priority (turmeric, ginger in meals), iron-rich dals 4×/week, seed cycling integration, balanced carbs across meals (no big gaps) |
+| High uric acid | No spinach + dal same meal, masoor dal max 2×/week, rajma max 1×/week, high fluid targets, cooling foods priority |
+| Hypertension | Low sodium targets, no pickle with every meal, potassium-rich foods (banana, sweet potato) weekly |
+| Hypothyroid | No raw cruciferous in morning (cooked ok), selenium-rich foods (brazil nuts once weekly), iodine from curd/dahi |
 
 **Acceptance criteria:**
-- Sign up, sign in, sign out flows.
-- Email verification on registration.
-- JWT stored securely (httpOnly cookie preferred, not localStorage).
-- Protected routes redirect unauthenticated users to login.
-- Auth state persists across page refreshes.
+- Rules are generated at profile save, stored in `profiles.rules[]`
+- Rules are shown to the user in plain language ("Why am I seeing this?")
+- The meal picker surfaces a warning badge on options that violate active rules
+- Rules interact correctly (e.g. LDL + diabetes combined → specific rule union)
+- New conditions can be added without code changes (data-driven rule table)
 
 ---
 
-### FEAT-003 · Backend: user data API
-**Priority:** P0 · **Size:** M
+### FEAT-103 · Dynamic macro targets per profile
+**Priority:** P0 · **Size:** S · **Status:** 🔴
 
-Replace hardcoded `data.js` with a database-backed API so data is per-user and persistable.
+Current: targets are hardcoded (65–80g protein, 1300–1550 kcal).
+Needed: targets derived from condition + body metrics.
 
-**Tables needed (Supabase / Postgres):**
+**Inputs:**
+- Age, weight, height, gender (optional but improve accuracy)
+- Activity level: sedentary / lightly active / moderately active / very active
+- Health condition (from FEAT-101)
+- Goal: maintain / lose / gain
+
+**Outputs (auto-calculated):**
+- Daily kcal range
+- Protein range (g)
+- Fibre target (g)
+- Carb ceiling (g) — especially for diabetics
+- Sodium ceiling (mg) — especially for hypertensives
+- Specific nutrient targets (iron for PCOS, potassium for hypertension, etc.)
+
+**Acceptance criteria:**
+- Targets calculated using standard formulas (Mifflin-St Jeor for BMR, multiplied by activity factor)
+- Condition-specific adjustments applied on top
+- Header and Summary panel reflect the user's actual targets
+- Targets recalculate when profile is updated
+
+---
+
+### FEAT-104 · Constraint violation warnings in the meal picker
+**Priority:** P1 · **Size:** M · **Status:** 🔴
+
+When a user picks a meal, the app checks it against their active rules.
+Violations are flagged clearly — never blocked, always explained.
+
+**Warning types:**
+- 🔴 Hard conflict: "You had soya yesterday. Adding soya today violates your LDL rule."
+- 🟡 Soft advisory: "This option has more saturated fat than ideal for your cholesterol target."
+- ℹ️ Information: "This is a paneer meal. You've had 1 paneer meal this week (limit: 2)."
+
+**Acceptance criteria:**
+- Warnings shown inline on option cards — a badge, not a blocking modal
+- Tapping/clicking the badge shows a full explanation with the clinical rationale
+- Weekly frequency tracking for flagged ingredients (soya, paneer, rajma, masoor)
+- Warnings respect the user's condition profile — no warnings if no conditions set
+
+---
+
+### FEAT-105 · Settings page
+**Priority:** P1 · **Size:** S · **Status:** 🔴
+
+**Acceptance criteria:**
+- Edit profile: name, city, diet type
+- Edit conditions: add/remove health conditions
+- Edit body metrics: age, weight, height, activity level
+- Edit family members (placeholder — full feature in M2)
+- Danger zone: delete account
+
+---
+
+## M2 — AI Meal Generator & Family Profiles
+
+> Goal: The app actively suggests what to eat, not just lets you pick from a list.
+> And it does this for the whole family, not just one person.
+
+---
+
+### FEAT-201 · AI Meal Generator
+**Priority:** P0 · **Size:** XL · **Status:** 🔴
+
+**The signature feature. This is what makes Aahar feel like magic.**
+
+Replaces the static option list with an AI-generated, always-personalized
+suggestion for each meal slot. The AI knows:
+- The user's health conditions and constraints
+- What they've already picked today (running macro total)
+- What they ate earlier this week (avoid repetition, enforce frequencies)
+- The current season and city
+- Time of day and slot context
+
+**Input (to the LLM):**
 ```
-users           — id, email, created_at, profile_id
-profiles        — id, user_id, name, kcal_target, protein_target, fibre_target, diet_tags[], city, season
-day_plans       — id, user_id, date, picks (jsonb), created_at, updated_at
-meal_options    — id, user_id (null = global), slot_id, name, detail, p, f, c, k, tags[]
-constraints     — id, user_id, text, is_active
+User: 38F, High LDL, pre-diabetic, Gurgaon, May
+Already today: wakeup=walnuts+almonds, breakfast=overnight oats
+Running macros: P=29g, F=17g, C=74g, kcal=635
+Slot: mid-morning
+Remaining targets: P=51g, F=13g, C=96g, kcal=865
+Rules: soya ok today (last was 2 days ago), paneer limit not hit
+Season: summer, 40°C forecast
+
+Generate 4 mid-morning options. Indian ingredients only.
+Each must: hit slot macro targets, respect rules, be summer-appropriate.
+Output JSON: [{name, detail, macros, tags, prep_time}]
 ```
 
 **Acceptance criteria:**
-- `GET /plans/:date` returns the user's plan for that date (creates empty if none).
-- `PUT /plans/:date` saves picks atomically.
-- All endpoints require a valid JWT.
-- Global meal options are readable by all users; user-created options are private.
+- AI generates 4 options per slot on demand (tap "Suggest" button)
+- Generated options are saved to the user's personal library for reuse
+- Options that clash with constraints are never generated (pre-filtered in prompt)
+- Generation takes < 5 seconds (streaming preferred)
+- Fallback to curated options if AI call fails
+- Cost guardrails: cache identical context hits for 24h
 
 ---
 
-### FEAT-004 · Mobile-responsive layout
-**Priority:** P0 · **Size:** M
+### FEAT-202 · Natural language meal request
+**Priority:** P1 · **Size:** M · **Status:** 🔴
 
-Current layout is desktop-only (1100px grid with a fixed 320px sidebar).
+*"I have lauki and moong dal. I'm tired. Plan my dinner."*
+
+A text input per slot (or for the whole day) that the AI interprets.
+Contextual constraints are applied automatically.
 
 **Acceptance criteria:**
-- On screens < 768px: slot tabs scroll horizontally; sidebar (Summary) moves below the main panel or becomes a bottom sheet.
-- On screens < 480px: meal option cards go single-column.
-- Slot tabs are touch-friendly (min 44px tap target).
-- Sticky header and tab bar still work correctly on mobile Safari and Chrome.
-- No horizontal scroll on any viewport ≥ 320px wide.
+- Text input field available on the slot panel ("Tell me what you have...")
+- AI extracts: ingredients mentioned, energy level, time constraint, preferences
+- Generates options that use those ingredients + meet constraints
+- Response time < 8 seconds
+- Input pre-filled with yesterday's dinner context on first open (reduces friction)
 
 ---
 
-### FEAT-005 · Onboarding flow
-**Priority:** P1 · **Size:** M
+### FEAT-203 · Family profiles
+**Priority:** P0 · **Size:** L · **Status:** 🔴
 
-New users land on a blank app with no context. Need a guided first-run experience.
+**The feature that makes Aahar a household product, not an individual tracker.**
+
+Up to 5 family member profiles per account. Each has:
+- Name, age, gender
+- Health conditions (from the same FEAT-101 list)
+- Dietary restrictions
+- Calorie target
+
+**The Family Nutrition Harmonizer:**
+- When planning a meal, the AI sees all active family profiles
+- It finds meal options that satisfy all profiles simultaneously
+- It flags where a modification is needed ("Add extra roti for Arjun, skip achaar for Papa")
+- The main macro tracker shows the primary user's macros; family view shows all
 
 **Acceptance criteria:**
-- After first sign-up, a 3-step wizard collects: name, daily kcal target, dietary preferences (veg / vegan / non-veg), city / season context.
-- Wizard pre-populates targets and hides season-inappropriate options.
-- Can be skipped and revisited via Settings.
-- Progress is saved after each step so abandonment doesn't lose data.
+- Add/edit/remove family members from Settings
+- Family view on the weekly planner shows all members' coverage
+- Meal cards show a "works for" indicator (which family members it satisfies)
+- Household grocery list aggregates across all profiles
 
 ---
 
-## M2 — Core Planning
+### FEAT-204 · Weekly planner view
+**Priority:** P1 · **Size:** L · **Status:** 🔴
 
-### FEAT-006 · Weekly planner view
-**Priority:** P0 · **Size:** L
-
-Users plan multiple days, not just today. Need a 7-day grid.
+7-day planning grid. The daily view (current) slots into this as one column.
 
 **Acceptance criteria:**
-- Week grid shows Mon–Sun with a compact summary per day (total kcal, slots filled).
-- Clicking a day loads that day's plan in the existing slot panel.
-- "Copy from yesterday" button populates the current day with the previous day's picks.
-- Days in the past are read-only (viewable, not editable).
-- Navigating weeks (prev/next) works without page reload.
+- Mon–Sun grid with day-level status (kcal filled, slots picked, constraint violations)
+- Click any day to open that day's plan
+- "Copy from yesterday" one-tap action
+- Week-level constraint checks (e.g., soya 4×/week limit shown at week level)
+- Days in the past are read-only
+- Week navigation (prev/next) without page reload
 
 ---
 
-### FEAT-007 · Constraint enforcement engine
-**Priority:** P1 · **Size:** M
+### FEAT-205 · Plan memory & learning
+**Priority:** P2 · **Size:** M · **Status:** 🔴
 
-Rules like "soya max 4×/week, never 2 consecutive days" are currently just text reminders — they aren't enforced. Users violate them unknowingly.
+The app should learn from what the user actually picks and avoid monotony.
 
 **Acceptance criteria:**
-- When a user picks a soya option, the app checks the current week's soya count and yesterday's pick.
-- If the constraint would be violated, show a non-blocking warning on the card (not a hard block).
-- Constraint violations are summarised in the Summary panel with a badge count.
-- Paneer, chaas/chana alternation, and bajra seasonality are all enforced the same way.
-- Constraints are driven by data (configurable per user), not hardcoded.
+- Track frequency of each meal option in the last 30 days
+- AI generator deprioritizes recently repeated options
+- "Haven't had this in a while" tags on options not picked in 14+ days
+- Monthly variety score shown in the dashboard
 
 ---
 
-### FEAT-008 · Grocery list generation
-**Priority:** P1 · **Size:** M
+## M3 — Seasonal Intelligence & Indian Food Database
 
-A filled weekly plan contains all the information needed to produce a shopping list. Users currently re-derive this manually.
+> Goal: The deepest Indian food knowledge of any product on the market.
+> The moat that takes years to replicate.
+
+---
+
+### FEAT-301 · Indian food database v1
+**Priority:** P0 · **Size:** XL · **Status:** 🔴
+
+The foundation of everything. A nutritionally accurate, culturally complete database
+of Indian ingredients and meals.
+
+**Scope (v1):**
+- 500+ Indian ingredients with accurate macros (accounting for cooking method)
+- Regional variants (North Indian dal differs from South Indian sambar)
+- Preparation method adjustments (pressure-cooked dal vs stovetop)
+- Seasonal availability by region
+- Ayurvedic properties (cooling/heating/neutral) — validated against nutritional science
+- Common Indian cooking oil quantities (not raw ingredient nutrition)
+
+**Quality standard:**
+- Sources: NIN (National Institute of Nutrition India) + peer-reviewed Indian nutrition studies
+- Macros verified for cooked, not raw, portions (how Indians actually eat)
+- Quantities in Indian measurements (katori, tbsp, pieces) not just grams
 
 **Acceptance criteria:**
-- "Generate grocery list" button appears when ≥ 3 days of the current week are planned.
-- Output groups ingredients by category (grains, pulses, dairy, produce, pantry).
-- Quantities are aggregated across the week (e.g. "oats: 350g").
-- List is copyable as plain text and exportable as PDF.
-- Users can check off items as they shop (state persists in localStorage / DB).
+- Stored in Supabase `ingredients` and `meal_templates` tables
+- Queryable by condition, season, region, cook-time, available ingredients
+- Admin interface to add/edit entries (FEAT-501)
 
 ---
 
-### FEAT-009 · Nutrition history & trends
-**Priority:** P1 · **Size:** M
+### FEAT-302 · Seasonal intelligence engine
+**Priority:** P1 · **Size:** M · **Status:** 🔴
 
-Users need to see whether their plan is working over time, not just for today.
+The app that knows it's June in Gurgaon.
+
+**Season definitions (North India as v1):**
+- Summer (Apr–Jun): cooling foods, high-water veg, lighter proteins
+- Monsoon (Jul–Sep): light, easy-to-digest, avoid raw salads
+- Autumn (Oct–Nov): transitional, reintroduce warming foods
+- Winter (Dec–Mar): heavier foods, warming spices, bajra/makki rotis
 
 **Acceptance criteria:**
-- A "Trends" view shows a 4-week chart of daily kcal, protein, fibre.
-- Bars are colour-coded: green = within target, amber = close, red = over/under.
-- Hovering / tapping a bar shows that day's full plan summary.
-- Data is derived from saved `day_plans` — no manual logging required.
+- City + current month determines active season automatically
+- Out-of-season options hidden by default (bajra roti hidden in June Delhi)
+- "Show all seasons" toggle to override
+- Seasonal badges on option cards ("summer pick", "winter only")
+- Hydration targets adjust based on city temperature (API or static seasonal lookup)
+- Seasonal intelligence extends to generated AI meals (FEAT-201)
 
 ---
 
-### FEAT-010 · Plan templates
-**Priority:** P2 · **Size:** S
+### FEAT-303 · Regional meal intelligence
+**Priority:** P2 · **Size:** L · **Status:** 🔴
 
-Power users want to save and reuse proven day plans without re-picking every slot.
+India is not one cuisine. A user in Chennai eats differently from one in Lucknow.
+
+**v1 regions:**
+- North Indian (default) — dal-roti-sabzi base
+- South Indian — rice/idli/dosa base, sambar, rasam, coconut
+- Gujarati — dal-bati, dhokla, thepla, sweet-sour balance
+- Bengali — fish-centric (non-veg option), mustard, panch phoron
+- Maharashtrian — bhakri, missal, poha base
 
 **Acceptance criteria:**
-- "Save as template" action on any fully-picked day.
-- Templates have a name and are listed on a Templates screen.
-- "Apply template" one-click loads all picks into any empty day.
-- Up to 10 templates per user; delete / rename supported.
+- User selects home cuisine in profile setup
+- Meal database filters to show region-appropriate options by default
+- AI generator respects regional cuisine in prompts
+- Cross-regional options tagged appropriately
 
 ---
 
-## M3 — Personalisation
+### FEAT-304 · Ingredient availability & substitution AI
+**Priority:** P2 · **Size:** M · **Status:** 🔴
 
-### FEAT-011 · User profile & custom targets
-**Priority:** P1 · **Size:** M
-
-Targets (1400–1500 kcal, 65–80g protein) are hardcoded. Every user has different needs.
+*"I don't have hung curd — what can I use?"*
+*"Sattu isn't available in my city — what's equivalent?"*
 
 **Acceptance criteria:**
-- Settings page lets users update: name, daily kcal range, protein range, fibre range, dietary tags, city, season override.
-- Changes immediately update all UI targets and macro bar ranges.
-- Header subtitle reflects the user's actual targets, not hardcoded values.
-- Targets validated: kcal 1000–3500, protein 40–200g, fibre 15–60g.
+- Ingredient substitution available on any meal card (tap ingredient in detail)
+- AI suggests 2–3 Indian substitutes with nutrition impact delta
+- "What can I make with these?" — enter available ingredients, AI suggests meals
+- Common substitutions pre-cached (no API call needed for top 50 swaps)
 
 ---
 
-### FEAT-012 · Custom meal option creation
-**Priority:** P1 · **Size:** M
+## M4 — Clinical Tier & Dietitian Tools
 
-Users want to add their own meals that aren't in the global database.
+> Goal: Make Aahar medically credible and open the B2B channel.
+
+---
+
+### FEAT-401 · Doctor / dietitian report
+**Priority:** P1 · **Size:** M · **Status:** 🔴
+
+Weekly nutrition report formatted for clinical review.
+
+**Report contents:**
+- 7-day macro averages vs targets
+- Condition-specific metrics (e.g., saturated fat and fibre for LDL users)
+- Key food frequency table (soya, dairy, pulses, specific prescribed foods)
+- Constraint compliance rate (% of days rules were followed)
+- Notable patterns ("You skipped breakfast 3 times this week")
 
 **Acceptance criteria:**
-- "Add custom meal" button on each slot panel.
-- Form collects: name, description, macros (p/f/c/kcal), tags, slot assignment.
-- Custom meals appear in the options list with a "custom" tag and edit/delete controls.
-- Custom meals are private to the user.
-- Macro validation: warn if kcal is implausible vs. p/f/c.
+- Generated as a PDF (Puppeteer or similar server-side rendering)
+- Shareable via link (expires in 7 days) or downloadable
+- Formatted for a doctor to scan in 60 seconds — not a data dump
+- Patient name, date range, and conditions shown on the report header
 
 ---
 
-### FEAT-013 · Smart meal suggestions
-**Priority:** P2 · **Size:** L
+### FEAT-402 · Dietitian Pro mode
+**Priority:** P2 · **Size:** L · **Status:** 🔴
 
-As picks are made, the app can surface the best remaining options for unfilled slots to hit the day's macro targets.
+The B2B wedge. Dietitians manage Aahar plans for their clients.
 
 **Acceptance criteria:**
-- "Suggest" button per unfilled slot recommends 1–3 options that bring the running total closest to targets.
-- Suggestions respect active constraints (e.g. won't suggest soya if already used today).
-- Suggestions are dismissible and don't replace manual picks.
-- Algorithm is simple linear scoring; no ML required in v1.
+- Dietitian account type (set in admin)
+- Dietitian can view and edit plans for clients who have granted access
+- Dietitian can annotate meal slots with comments
+- Client sees comments with "From your dietitian" tag
+- Dietitian dashboard: all clients' compliance rates at a glance
+- Clients managed by a dietitian get the Clinical tier features included
 
 ---
 
-### FEAT-014 · Seasonal menu automation
-**Priority:** P2 · **Size:** S
+### FEAT-403 · Lab report integration
+**Priority:** P3 · **Size:** L · **Status:** 🔴
 
-Currently season-inappropriate options (e.g. bajra roti in summer) are visible but flagged by text. They should be auto-hidden or de-prioritised by season.
+Upload a blood test report. AI extracts LDL, HbA1c, ferritin, etc.
+and updates condition rules automatically.
 
 **Acceptance criteria:**
-- User's city + current month determines the active season (summer Apr–Jun, monsoon Jul–Sep, winter Oct–Mar for North India defaults).
-- Out-of-season options are hidden by default with an "Show all" toggle to reveal them.
-- Season can be manually overridden in profile settings.
+- PDF/image upload of common Indian lab formats (Thyrocare, Dr Lal, SRL)
+- AI OCR + extraction of key biomarkers
+- Side-by-side: last report vs current report — delta shown
+- Extracted values update the condition → rule engine automatically
+- Privacy: lab reports stored encrypted, never used for ML training without consent
 
 ---
 
-## M4 — Social & Growth
+## M5 — Growth & Scale
 
-### FEAT-015 · Shareable plan links
-**Priority:** P2 · **Size:** S
+---
 
-Users want to share their day or week plan with family members, doctors, or nutritionists.
+### FEAT-501 · Grocery list with BigBasket / Zepto integration
+**Priority:** P1 · **Size:** L · **Status:** 🔴
+
+Turn the week's meal plan into a one-tap grocery order.
 
 **Acceptance criteria:**
-- "Share" action generates a read-only public link for the current day or week.
-- Shared view shows all picks and macro summary but no edit controls.
-- Link expires after 7 days (configurable).
-- User can revoke a shared link at any time.
+- "Generate grocery list" from any planned week
+- Ingredients grouped by category (grains, pulses, dairy, produce, pantry)
+- Quantities aggregated across the week and scaled for family size
+- BigBasket deep-link integration (add to cart via API or search deep-link)
+- Zepto integration (same)
+- Manual check-off for items already at home
+- Estimated cost shown (BigBasket pricing API if available, else manual)
 
 ---
 
-### FEAT-016 · Nutritionist / coach review mode
-**Priority:** P2 · **Size:** M
-
-Nutritionists reviewing a client's plan need to annotate and suggest changes without editing the client's data.
+### FEAT-502 · Shareable meal plans
+**Priority:** P2 · **Size:** S · **Status:** 🔴
 
 **Acceptance criteria:**
-- A nutritionist can be invited via email to access a user's plan in review mode.
-- Review mode allows adding comments per meal slot (text only, v1).
-- Comments are visible to the user with timestamps.
-- User can mark comments as resolved.
-- Nutritionist cannot directly edit the user's picks.
+- "Share this week" generates a read-only public link
+- Shared view shows all picks + macro summary, no edit controls
+- Link expires in 7 days, user can revoke
+- Share to WhatsApp one-tap (primary Indian sharing channel)
 
 ---
 
-### FEAT-017 · Export to image / PDF
-**Priority:** P3 · **Size:** S
+### FEAT-503 · Tiffin planner
+**Priority:** P2 · **Size:** M · **Status:** 🔴
 
-Users want a shareable, printable summary of the day or week plan.
+A uniquely Indian use case: planning the next day's tiffin alongside dinner.
 
 **Acceptance criteria:**
-- "Export" button generates a clean, branded PNG of the day's picks + macro summary.
-- PDF version includes the full week plan with grocery list on the last page.
-- Export uses html-to-canvas or a server-side rendering approach; no external image APIs.
+- "Plan tomorrow's tiffin" mode suggests lunch options that travel well cold
+- Cross-uses tonight's dinner ingredients where possible (reduce waste)
+- Flags items that need morning prep vs can be packed from dinner leftovers
+- Packing checklist with tiffin box layout suggestions
 
 ---
 
-## M5 — Scale & Ops
+### FEAT-504 · Festival & occasion mode
+**Priority:** P3 · **Size:** M · **Status:** 🔴
 
-### FEAT-018 · Progressive Web App (PWA)
-**Priority:** P2 · **Size:** M
-
-Users on mobile should be able to install the app and access their plan offline.
+Navratri fasts, Karva Chauth, Ramzan, Diwali — Indian calendars have
+nutritional implications that no app currently handles.
 
 **Acceptance criteria:**
-- Service worker caches the app shell and the user's last 7 days of plan data.
-- Offline edits are queued and synced when connectivity returns.
-- "Add to home screen" prompt appears after 3rd visit.
-- App works fully in airplane mode for viewing and editing cached plans.
-
----
-
-### FEAT-019 · Error monitoring & observability
-**Priority:** P3 · **Size:** S · **Status:** Deferred — not needed yet
-
-Deferred until the app has meaningful production traffic. React error boundary is still worth adding (no external dependency).
-
----
-
-### FEAT-020 · Admin panel
-**Priority:** P2 · **Size:** M
-
-Needed for managing global meal options, reviewing users, and operational tasks.
-
-**Acceptance criteria:**
-- Admin role (set in DB) unlocks an `/admin` route.
-- Admin can create / edit / delete global meal options.
-- Admin can view aggregated usage stats (DAU, plans created per day, most-picked meals).
-- Admin cannot see individual user's meal picks (privacy).
-
----
-
-### FEAT-021 · Analytics instrumentation
-**Priority:** P3 · **Size:** S · **Status:** Deferred — not needed yet
-
-Deferred until there are enough users to make the data meaningful.
-
----
-
-### FEAT-022 · Multi-tenancy & billing (future)
-**Priority:** P3 · **Size:** XL
-
-If the product grows to serve nutritionists managing multiple clients, a workspace / subscription model is needed.
-
-**Scope (v1 design only, not implementation):**
-- Workspace owns multiple user accounts.
-- Nutritionist role can manage plans for all workspace members.
-- Free tier: 1 user, 7-day history, no sharing.
-- Pro tier: unlimited history, sharing, trends, grocery list.
-- Stripe integration for subscription management.
+- Calendar overlay of major Indian festivals
+- Navratri mode: automatically filters to saatvik/vrat-appropriate options
+- Pre-festival prep: suggests liver-friendly, light foods in the week before Diwali
+- Post-fast meal planning: appropriate re-introduction of foods
+- Regional festival calendar variants (South Indian, Bengali, Gujarati)
 
 ---
 
 ## Tech Debt & Infrastructure
 
-| ID | Item | Priority |
-|----|------|----------|
-| TD-001 | Replace inline styles with a CSS-in-JS solution (styled-components or Tailwind) | P2 |
-| TD-002 | Extract hardcoded colour values into a design token file | P1 |
-| TD-003 | Add Vitest unit tests for macro calculation logic | P1 |
-| TD-004 | Add Playwright E2E tests for the pick → summary flow | P2 |
-| TD-005 | Set up CI/CD pipeline (GitHub Actions → Vercel preview → prod) | P1 |
-| TD-006 | Environment variable management (`.env.example`, secrets in Vercel) | P0 |
-| TD-007 | i18n scaffolding for Hindi localisation | P3 |
+| ID | Item | Priority | Notes |
+|----|------|----------|-------|
+| TD-001 | Migrate inline styles to Tailwind | P1 | Start with new components, migrate existing over time |
+| TD-002 | Vitest unit tests for constraint engine | P0 | Clinical logic must be tested exhaustively |
+| TD-003 | Playwright E2E for pick → persist flow | P1 | Core user journey |
+| TD-004 | GitHub Actions CI (lint + test + preview deploy) | P1 | Before any team scaling |
+| TD-005 | LLM cost monitoring + budget alerts | P1 | Needed before FEAT-201 ships |
+| TD-006 | Indian food database schema design | P0 | Foundation for M3 — design before building |
+| TD-007 | Error boundary + friendly error UI | P1 | Basic UX hygiene |
+| TD-008 | Mobile responsive layout | P0 | Primary device for target user is mobile |
+| TD-009 | Rate limiting on AI endpoints | P1 | Prevent abuse and runaway costs |
+| TD-010 | DPDP Act compliance audit | P1 | India's Digital Personal Data Protection Act — health data is sensitive |
 
 ---
 
@@ -346,9 +499,12 @@ If the product grows to serve nutritionists managing multiple clients, a workspa
 
 | Date | Decision | Rationale |
 |------|----------|-----------|
-| 2026-05-09 | Supabase chosen as backend | Postgres + RLS + realtime; zero infra ops for early stage |
-| 2026-05-09 | Clerk chosen for auth (not Supabase Auth) | Better DX, pre-built UI components, Google OAuth, works cleanly with Supabase RLS via JWT |
-| 2026-05-09 | Persistence goes direct to Supabase in M1 (no localStorage step) | Clerk is being set up anyway; skip the localStorage interim step |
-| 2026-05-09 | Constraint engine is advisory (warnings), not blocking | Hard blocks create frustration; warnings educate without removing agency |
-| 2026-05-09 | No ML for suggestions in v1 | Linear scoring is good enough and auditable; revisit if suggestions adoption > 30% |
-| 2026-05-09 | Monitoring (Sentry) and analytics (PostHog) deferred | Not needed until meaningful traffic; revisit at M4 |
+| 2026-05-09 | Supabase for DB | Postgres + RLS + realtime; zero infra ops for early stage |
+| 2026-05-09 | Clerk for auth | Pre-built UI, Google OAuth, clean Supabase JWT integration |
+| 2026-05-09 | Constraint engine is advisory, never blocking | Hard blocks create frustration; warnings educate |
+| 2026-05-09 | Monitoring / analytics deferred | Not needed until meaningful traffic |
+| 2026-05-11 | Product renamed to Aahar | Authentic Indian word, spans all languages, clinically resonant |
+| 2026-05-11 | Core pivot: personal tracker → AI clinical nutritionist | The data revealed a medical nutrition layer that is the real differentiator |
+| 2026-05-11 | Family-first planning as key differentiator | No competitor approaches Indian household cooking dynamics |
+| 2026-05-11 | Seasonal + Ayurvedic intelligence is core, not a feature | This is the moat — Indian knowledge no global company will build |
+| 2026-05-11 | Dietitian B2B is the monetization wedge | Scales the knowledge graph + opens institutional revenue |

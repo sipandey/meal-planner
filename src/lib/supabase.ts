@@ -23,14 +23,18 @@ export interface Profile {
   id: string
   clerk_user_id: string
   name: string | null
-  kcal_min: number
-  kcal_max: number
-  protein_min: number
-  protein_max: number
-  fibre_min: number
-  fibre_max: number
   city: string
   diet: 'vegetarian' | 'vegan' | 'non-vegetarian'
+  region: 'north_indian' | 'south_indian' | 'gujarati' | 'bengali' | 'maharashtrian' | 'other'
+  // Health profile (from onboarding wizard)
+  conditions: string[]          // ConditionId[]
+  age: number | null
+  weight_kg: number | null
+  height_cm: number | null
+  gender: 'male' | 'female' | 'other' | 'prefer_not_to_say' | null
+  activity_level: 'sedentary' | 'light' | 'moderate' | 'active'
+  goal: 'manage_condition' | 'lose_weight' | 'maintain' | 'build_muscle'
+  cooking_for: 'self' | 'couple' | 'family'
   onboarded: boolean
   created_at: string
   updated_at: string

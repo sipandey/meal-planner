@@ -1,8 +1,9 @@
 import { SLOTS, OPTIONS } from '../data'
+import { DEFAULT_TARGETS } from '../data/macroTargets'
 
 function MacroBar({ label, value, min, max, color }) {
   const pct = Math.min(100, (value / max) * 100)
-  const ok = value >= min && value <= max
+  const ok   = value >= min && value <= max
   const over = value > max
   return (
     <div style={{ marginBottom: 10 }}>
@@ -14,10 +15,9 @@ function MacroBar({ label, value, min, max, color }) {
       </div>
       <div style={{ height: 6, background: '#eee8df', borderRadius: 3, overflow: 'hidden' }}>
         <div style={{
-          height: '100%', borderRadius: 3,
-          width: `${pct}%`,
+          height: '100%', borderRadius: 3, width: `${pct}%`,
           background: ok ? color : over ? '#c0392b' : '#c9933a',
-          transition: 'width 0.3s ease'
+          transition: 'width 0.3s ease',
         }} />
       </div>
       <div style={{ fontSize: 10, color: '#9aaa99', marginTop: 2, textAlign: 'right' }}>
@@ -27,12 +27,17 @@ function MacroBar({ label, value, min, max, color }) {
   )
 }
 
-export default function Summary({ picks, totals, pickedCount, onClear, onSlotClick }) {
+export default function Summary({ picks, totals, targets, pickedCount, onClear, onSlotClick, profile }) {
+  const t = targets ?? DEFAULT_TARGETS
+
   const allPicked = pickedCount === SLOTS.length
-  const allOk = totals.p >= 65 && totals.p <= 82
-    && totals.f >= 22 && totals.f <= 32
-    && totals.c >= 130 && totals.c <= 170
-    && totals.k >= 1300 && totals.k <= 1550
+  const allOk =
+    totals.p >= t.protein.min && totals.p <= t.protein.max &&
+    totals.f >= t.fibre.min   && totals.f <= t.fibre.max   &&
+    totals.c >= t.carbs.min   && totals.c <= t.carbs.max   &&
+    totals.k >= t.kcal.min    && totals.k <= t.kcal.max
+
+  const greeting = profile?.name ? `${profile.name}'s plan` : "Today's plan"
 
   return (
     <div>
@@ -40,7 +45,7 @@ export default function Summary({ picks, totals, pickedCount, onClear, onSlotCli
       <div style={{
         background: allPicked ? (allOk ? '#edf5ea' : '#fef8ec') : '#fff',
         border: `1px solid ${allPicked ? (allOk ? '#95c99d' : '#f0d080') : '#e8dfd0'}`,
-        borderRadius: 12, padding: '14px 16px', marginBottom: 14
+        borderRadius: 12, padding: '14px 16px', marginBottom: 14,
       }}>
         <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 2, color: '#1c2b1c' }}>
           {allPicked
@@ -49,37 +54,39 @@ export default function Summary({ picks, totals, pickedCount, onClear, onSlotCli
         </div>
         <div style={{ fontSize: 11, color: '#6a7a6a' }}>
           {allPicked
-            ? allOk ? 'All macros within range' : 'Some macros out of range — adjust picks'
-            : 'Pick one option per meal slot'}
+            ? allOk
+              ? 'All macros within your personal range'
+              : 'Some macros out of range — adjust picks'
+            : greeting + ' — pick one option per slot'}
         </div>
       </div>
 
-      {/* Macro bars */}
+      {/* Macro bars — dynamic targets */}
       <div style={{
         background: '#fff', border: '1px solid #e8dfd0',
-        borderRadius: 12, padding: '14px 16px', marginBottom: 14
+        borderRadius: 12, padding: '14px 16px', marginBottom: 14,
       }}>
         <div style={{ fontSize: 11, fontWeight: 600, color: '#8a9a8a', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>
           Daily macros
         </div>
-        <MacroBar label="Protein (g)"   value={totals.p} min={65}   max={82}   color="#2d6a4f" />
-        <MacroBar label="Fibre (g)"     value={totals.f} min={22}   max={32}   color="#52b788" />
-        <MacroBar label="Carbs (g)"     value={totals.c} min={130}  max={170}  color="#c9933a" />
-        <MacroBar label="Calories"      value={totals.k} min={1300} max={1550} color="#9c8b7a" />
+        <MacroBar label="Protein (g)" value={totals.p} min={t.protein.min} max={t.protein.max} color="#2d6a4f" />
+        <MacroBar label="Fibre (g)"   value={totals.f} min={t.fibre.min}   max={t.fibre.max}   color="#52b788" />
+        <MacroBar label="Carbs (g)"   value={totals.c} min={t.carbs.min}   max={t.carbs.max}   color="#c9933a" />
+        <MacroBar label="Calories"    value={totals.k} min={t.kcal.min}    max={t.kcal.max}    color="#9c8b7a" />
       </div>
 
       {/* Slot picks list */}
       <div style={{
         background: '#fff', border: '1px solid #e8dfd0',
-        borderRadius: 12, padding: '14px 16px', marginBottom: 14
+        borderRadius: 12, padding: '14px 16px', marginBottom: 14,
       }}>
         <div style={{ fontSize: 11, fontWeight: 600, color: '#8a9a8a', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>
-          Today's picks
+          {greeting}
         </div>
         {SLOTS.map(s => {
-          const idx = picks[s.id]
-          const hasPick = idx !== null
-          const o = hasPick ? OPTIONS[s.id][idx] : null
+          const idx    = picks[s.id]
+          const hasPick = idx !== null && idx !== undefined
+          const o      = hasPick ? OPTIONS[s.id][idx] : null
           return (
             <div
               key={s.id}
@@ -87,7 +94,7 @@ export default function Summary({ picks, totals, pickedCount, onClear, onSlotCli
               style={{
                 display: 'flex', gap: 8, padding: '7px 0',
                 borderBottom: '1px solid #f0e9df', cursor: 'pointer',
-                alignItems: 'flex-start'
+                alignItems: 'flex-start',
               }}
             >
               <span style={{ fontSize: 14, flexShrink: 0, marginTop: 1 }}>{s.emoji}</span>
@@ -97,7 +104,7 @@ export default function Summary({ picks, totals, pickedCount, onClear, onSlotCli
                   <>
                     <div style={{
                       fontSize: 12, fontWeight: 500, color: '#1c2b1c',
-                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                     }}>
                       {o.name.split('(')[0].trim()}
                     </div>
@@ -110,20 +117,19 @@ export default function Summary({ picks, totals, pickedCount, onClear, onSlotCli
                 )}
               </div>
               {hasPick && (
-                <span style={{
-                  fontSize: 10, color: '#2d6a4f', fontWeight: 500,
-                  flexShrink: 0, marginTop: 4
-                }}>change</span>
+                <span style={{ fontSize: 10, color: '#2d6a4f', fontWeight: 500, flexShrink: 0, marginTop: 4 }}>
+                  change
+                </span>
               )}
             </div>
           )
         })}
       </div>
 
-      {/* Constraint reminders */}
+      {/* Quick constraint checks */}
       <div style={{
         background: '#f2f7ee', border: '1px solid #c5dbbf',
-        borderRadius: 12, padding: '12px 16px', marginBottom: 14
+        borderRadius: 12, padding: '12px 16px', marginBottom: 14,
       }}>
         <div style={{ fontSize: 11, fontWeight: 600, color: '#2d6a4f', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           Quick checks
@@ -145,7 +151,7 @@ export default function Summary({ picks, totals, pickedCount, onClear, onSlotCli
         <button onClick={onClear} style={{
           width: '100%', padding: '8px', borderRadius: 8,
           border: '1px solid #e8dfd0', background: '#fff',
-          color: '#6a7a6a', fontSize: 12, cursor: 'pointer', fontWeight: 500
+          color: '#6a7a6a', fontSize: 12, cursor: 'pointer', fontWeight: 500,
         }}>
           ✕ Clear all picks
         </button>
