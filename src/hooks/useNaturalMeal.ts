@@ -5,7 +5,7 @@
  */
 
 import { useState, useCallback } from 'react'
-import { useSupabase } from './useSupabase'
+import { useAuth } from '@clerk/clerk-react'
 import { SLOTS, OPTIONS } from '../data'
 import type { Picks } from './useDayPlan'
 
@@ -26,7 +26,7 @@ interface UseNaturalMealOptions {
 }
 
 export function useNaturalMeal({ picks, profile, dailyTargets }: UseNaturalMealOptions) {
-  const supabase = useSupabase()
+  const { getToken } = useAuth()
   const [loading, setLoading]   = useState(false)
   const [error, setError]       = useState('')
   const [result, setResult]     = useState<NaturalSuggestion | null>(null)
@@ -56,11 +56,7 @@ export function useNaturalMeal({ picks, profile, dailyTargets }: UseNaturalMealO
     setResult(null)
 
     try {
-      const client = await supabase.db()
-      const { data: sessionData } = await (client as unknown as {
-        auth: { getSession: () => Promise<{ data: { session: { access_token: string } | null } }> }
-      }).auth.getSession()
-      const token = sessionData?.session?.access_token
+      const token = await getToken({ template: 'supabase' })
       if (!token) throw new Error('Not authenticated')
 
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string
@@ -89,7 +85,7 @@ export function useNaturalMeal({ picks, profile, dailyTargets }: UseNaturalMealO
     } finally {
       setLoading(false)
     }
-  }, [supabase, picks, profile, dailyTargets, getMacrosSoFar])
+  }, [getToken, picks, profile, dailyTargets, getMacrosSoFar])
 
   const clear = useCallback(() => { setResult(null); setError('') }, [])
 

@@ -4,7 +4,7 @@
  */
 
 import { useState, useCallback } from 'react'
-import { useSupabase } from './useSupabase'
+import { useAuth } from '@clerk/clerk-react'
 import { SLOTS, OPTIONS } from '../data'
 import type { Picks } from './useDayPlan'
 
@@ -32,7 +32,7 @@ export function useAISuggestion({
   dailyTargets,
   getViolations,
 }: UseAISuggestionOptions) {
-  const supabase = useSupabase()
+  const { getToken } = useAuth()
   const [suggestions, setSuggestions] = useState<Record<string, AISuggestion>>({})
   const [loading, setLoading]         = useState<Record<string, boolean>>({})
   const [error, setError]             = useState<Record<string, string>>({})
@@ -96,12 +96,7 @@ export function useAISuggestion({
     })
 
     try {
-      const client = await supabase.db()
-      // Get the Supabase session token (which carries the Clerk JWT via the template)
-      const { data: sessionData } = await (client as unknown as {
-        auth: { getSession: () => Promise<{ data: { session: { access_token: string } | null } }> }
-      }).auth.getSession()
-      const token = sessionData?.session?.access_token
+      const token = await getToken({ template: 'supabase' })
       if (!token) throw new Error('Not authenticated')
 
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string
@@ -145,7 +140,7 @@ export function useAISuggestion({
     } finally {
       setLoading(l => ({ ...l, [slotId]: false }))
     }
-  }, [supabase, picks, profile, dailyTargets, getMacrosSoFar, getPickedNames, getActiveViolationTags])
+  }, [getToken, picks, profile, dailyTargets, getMacrosSoFar, getPickedNames, getActiveViolationTags])
 
   /** Suggest for all empty slots sequentially */
   const suggestAll = useCallback(async () => {
