@@ -27,7 +27,7 @@ function MacroBar({ label, value, min, max, color }) {
   )
 }
 
-export default function Summary({ picks, totals, targets, pickedCount, onClear, onSlotClick, profile }) {
+export default function Summary({ picks, totals, targets, pickedCount, onClear, onSlotClick, profile, onAIFillDay, aiSuggestions, aiFilling }) {
   const t = targets ?? DEFAULT_TARGETS
 
   const allPicked = pickedCount === SLOTS.length
@@ -39,8 +39,32 @@ export default function Summary({ picks, totals, targets, pickedCount, onClear, 
 
   const greeting = profile?.name ? `${profile.name}'s plan` : "Today's plan"
 
+  const emptySlotCount = SLOTS.length - pickedCount
+
   return (
     <div>
+      {/* AI Fill Day button */}
+      {onAIFillDay && emptySlotCount > 0 && (
+        <button
+          onClick={onAIFillDay}
+          disabled={aiFilling}
+          style={{
+            width: '100%', padding: '10px 0', borderRadius: 10,
+            border: '2px solid #c8a8e0',
+            background: aiFilling ? '#f0e8f8' : 'linear-gradient(135deg, #f8f0ff 0%, #ede0ff 100%)',
+            color: '#6b3fa0', fontSize: 13, fontWeight: 700,
+            cursor: aiFilling ? 'wait' : 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            marginBottom: 12,
+            boxShadow: aiFilling ? 'none' : '0 2px 8px rgba(107,63,160,0.12)',
+            transition: 'all 0.15s',
+          }}
+        >
+          <span style={{ fontSize: 16 }}>{aiFilling ? '⏳' : '✨'}</span>
+          <span>{aiFilling ? `Filling ${emptySlotCount} slot${emptySlotCount > 1 ? 's' : ''}…` : `AI-fill ${emptySlotCount} empty slot${emptySlotCount > 1 ? 's' : ''}`}</span>
+        </button>
+      )}
+
       {/* Day status */}
       <div style={{
         background: allPicked ? (allOk ? '#edf5ea' : '#fef8ec') : '#fff',
@@ -87,6 +111,10 @@ export default function Summary({ picks, totals, targets, pickedCount, onClear, 
           const idx    = picks[s.id]
           const hasPick = idx !== null && idx !== undefined
           const o      = hasPick ? OPTIONS[s.id][idx] : null
+          const suggestion = aiSuggestions?.[s.id]
+          const hasSuggestion = !hasPick && suggestion
+          const suggestedOption = hasSuggestion ? OPTIONS[s.id][suggestion.index] : null
+
           return (
             <div
               key={s.id}
@@ -112,6 +140,18 @@ export default function Summary({ picks, totals, targets, pickedCount, onClear, 
                       {o.p}g protein · {o.f}g fibre · {o.c}g carbs · {o.k} kcal
                     </div>
                   </>
+                ) : hasSuggestion ? (
+                  <>
+                    <div style={{
+                      fontSize: 12, fontWeight: 500, color: '#6b3fa0',
+                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                    }}>
+                      ✨ {suggestedOption?.name?.split('(')[0]?.trim()}
+                    </div>
+                    <div style={{ fontSize: 10, color: '#9a7aaa', marginTop: 1 }}>
+                      AI suggestion — tap to review
+                    </div>
+                  </>
                 ) : (
                   <div style={{ fontSize: 12, color: '#c5cfc5', fontStyle: 'italic' }}>tap to pick</div>
                 )}
@@ -119,6 +159,11 @@ export default function Summary({ picks, totals, targets, pickedCount, onClear, 
               {hasPick && (
                 <span style={{ fontSize: 10, color: '#2d6a4f', fontWeight: 500, flexShrink: 0, marginTop: 4 }}>
                   change
+                </span>
+              )}
+              {hasSuggestion && (
+                <span style={{ fontSize: 10, color: '#6b3fa0', fontWeight: 600, flexShrink: 0, marginTop: 4 }}>
+                  view →
                 </span>
               )}
             </div>

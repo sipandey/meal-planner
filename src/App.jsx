@@ -7,6 +7,7 @@ import ConstraintsPanel from './components/ConstraintsPanel'
 import { useDayPlan, todayISO } from './hooks/useDayPlan'
 import { useProfile } from './hooks/useProfile'
 import { useConstraints } from './hooks/useConstraints'
+import { useAISuggestion } from './hooks/useAISuggestion'
 import { calculateMacroTargets, DEFAULT_TARGETS } from './data/macroTargets'
 
 export default function App() {
@@ -35,6 +36,10 @@ export default function App() {
   const today = todayISO()
   const { getViolations, hardViolation, dailyRequirements, activeRulesCount } =
     useConstraints(picks, {}, today)
+
+  // ── AI Meal Suggestion ─────────────────────────────────────────
+  const { suggestions, loading: aiLoading, error: aiError, suggestForSlot, suggestAll, clearSuggestion } =
+    useAISuggestion({ picks, profile, dailyTargets: targets, getViolations })
 
   // ── Running macro totals ───────────────────────────────────────
   const totals = useMemo(() =>
@@ -155,8 +160,12 @@ export default function App() {
             picked={picks[activeSlot]}
             filters={filters}
             setFilters={setFilters}
-            onPick={(idx) => pick(activeSlot, idx)}
+            onPick={(idx) => { pick(activeSlot, idx); clearSuggestion(activeSlot) }}
             getViolations={(idx) => getViolations(activeSlot, idx)}
+            aiSuggestion={suggestions[activeSlot]}
+            aiLoading={aiLoading[activeSlot]}
+            aiError={aiError[activeSlot]}
+            onAISuggest={() => suggestForSlot(activeSlot)}
           />
           <div style={{ position: 'sticky', top: 120 }}>
             <Summary
@@ -167,6 +176,9 @@ export default function App() {
               onClear={clearAll}
               onSlotClick={setActiveSlot}
               profile={profile}
+              onAIFillDay={suggestAll}
+              aiSuggestions={suggestions}
+              aiFilling={Object.values(aiLoading).some(Boolean)}
             />
           </div>
         </div>

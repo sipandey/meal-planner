@@ -84,7 +84,7 @@ function ViolationBadge({ violations }) {
   )
 }
 
-export default function SlotPanel({ slot, options, picked, filters, setFilters, onPick, getViolations }) {
+export default function SlotPanel({ slot, options, picked, filters, setFilters, onPick, getViolations, aiSuggestion, aiLoading, aiError, onAISuggest }) {
   const { tag, search } = filters
 
   const filtered = options.filter(o => {
@@ -108,7 +108,27 @@ export default function SlotPanel({ slot, options, picked, filters, setFilters, 
             <span style={{ fontSize: 16, fontWeight: 600, color: '#1c2b1c' }}>{slot.label}</span>
             <span style={{ fontSize: 13, color: '#8a9a8a', marginLeft: 8 }}>{slot.time}</span>
           </div>
-          <span style={{ fontSize: 12, color: '#8a9a8a' }}>{filtered.length} of {options.length} options</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 12, color: '#8a9a8a' }}>{filtered.length} of {options.length} options</span>
+            {onAISuggest && (
+              <button
+                onClick={onAISuggest}
+                disabled={aiLoading}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 5,
+                  padding: '5px 12px', borderRadius: 8,
+                  border: '1.5px solid #c8a8e0',
+                  background: aiLoading ? '#f0e8f8' : '#f8f0ff',
+                  color: '#6b3fa0', fontSize: 12, fontWeight: 600,
+                  cursor: aiLoading ? 'wait' : 'pointer',
+                  transition: 'all 0.15s',
+                }}
+              >
+                <span style={{ fontSize: 14 }}>{aiLoading ? '⏳' : '✨'}</span>
+                <span>{aiLoading ? 'Thinking…' : 'AI suggest'}</span>
+              </button>
+            )}
+          </div>
         </div>
         <div style={{ display: 'flex', gap: 16, fontSize: 11, color: '#5a6b5a' }}>
           <span>Target: <b style={{ color: '#2d6a4f' }}>{slot.target.p[0]}–{slot.target.p[1]}g protein</b></span>
@@ -117,6 +137,46 @@ export default function SlotPanel({ slot, options, picked, filters, setFilters, 
           <span><b style={{ color: '#5a5040' }}>{slot.target.k[0]}–{slot.target.k[1]} kcal</b></span>
         </div>
       </div>
+
+      {/* AI suggestion banner */}
+      {aiSuggestion && (
+        <div style={{
+          background: '#f8f0ff', border: '1.5px solid #c8a8e0',
+          borderRadius: 10, padding: '10px 14px', marginBottom: 14,
+          display: 'flex', alignItems: 'flex-start', gap: 8,
+        }}>
+          <span style={{ fontSize: 16, flexShrink: 0 }}>✨</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#6b3fa0', marginBottom: 2 }}>
+              AI recommends: {options[aiSuggestion.index]?.name?.split('(')[0]?.trim()}
+            </div>
+            <div style={{ fontSize: 11, color: '#7a5aaa', lineHeight: 1.5 }}>
+              {aiSuggestion.reason}
+            </div>
+          </div>
+          <button
+            onClick={() => onPick(aiSuggestion.index)}
+            style={{
+              padding: '4px 12px', borderRadius: 8,
+              border: '1.5px solid #c8a8e0', background: '#6b3fa0',
+              color: '#fff', fontSize: 11, fontWeight: 700,
+              cursor: 'pointer', flexShrink: 0,
+            }}
+          >
+            Pick it
+          </button>
+        </div>
+      )}
+
+      {aiError && (
+        <div style={{
+          background: '#fde8e8', border: '1px solid #e8c0c0',
+          borderRadius: 10, padding: '8px 14px', marginBottom: 14,
+          fontSize: 11, color: '#c0392b',
+        }}>
+          ⚠️ {aiError}
+        </div>
+      )}
 
       {/* Filters */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14, alignItems: 'center' }}>
@@ -148,6 +208,7 @@ export default function SlotPanel({ slot, options, picked, filters, setFilters, 
         {filtered.map((o, i) => {
           const realIdx = options.indexOf(o)
           const isSelected = picked === realIdx
+          const isAIRecommended = aiSuggestion?.index === realIdx
           const violations = getViolations ? getViolations(realIdx) : []
           const hasHard = violations.some(v => v.severity === 'hard')
 
@@ -156,9 +217,11 @@ export default function SlotPanel({ slot, options, picked, filters, setFilters, 
               key={i}
               onClick={() => onPick(realIdx)}
               style={{
-                background: isSelected ? '#edf5ea' : hasHard ? '#fdf8f8' : '#fff',
+                background: isSelected ? '#edf5ea' : isAIRecommended ? '#f8f0ff' : hasHard ? '#fdf8f8' : '#fff',
                 border: isSelected
                   ? '2px solid #2d6a4f'
+                  : isAIRecommended
+                  ? '2px solid #c8a8e0'
                   : hasHard
                   ? '1.5px solid #e8c0c0'
                   : '1px solid #e8dfd0',
@@ -174,6 +237,14 @@ export default function SlotPanel({ slot, options, picked, filters, setFilters, 
                   fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontWeight: 700,
                 }}>✓</div>
+              )}
+              {!isSelected && isAIRecommended && (
+                <div style={{
+                  position: 'absolute', top: 8, right: 8,
+                  background: '#6b3fa0', color: '#fff',
+                  fontSize: 9, fontWeight: 700, borderRadius: 99,
+                  padding: '2px 7px', letterSpacing: '0.03em',
+                }}>✨ AI pick</div>
               )}
 
               <div style={{
