@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 
 const ALL_TAGS = ['all', 'cooling', 'summer', 'fibre', 'quick', 'sattu', 'soya', 'paneer', 'oats', 'chaas', 'chana', 'flexi']
 
@@ -84,8 +84,10 @@ function ViolationBadge({ violations }) {
   )
 }
 
-export default function SlotPanel({ slot, options, picked, filters, setFilters, onPick, getViolations, aiSuggestion, aiLoading, aiError, onAISuggest, isMobile }) {
+export default function SlotPanel({ slot, options, picked, filters, setFilters, onPick, getViolations, aiSuggestion, aiLoading, aiError, onAISuggest, naturalMeal, onNaturalRequest, isMobile }) {
   const { tag, search } = filters
+  const [naturalText, setNaturalText] = useState('')
+  const naturalInputRef = useRef(null)
 
   const filtered = options.filter(o => {
     const matchTag = tag === 'all' || (o.tags || []).includes(tag)
@@ -177,6 +179,84 @@ export default function SlotPanel({ slot, options, picked, filters, setFilters, 
           ⚠️ {aiError}
         </div>
       )}
+
+      {/* Natural language input */}
+      <div style={{
+        background: '#fff', border: '1px solid #e8dfd0',
+        borderRadius: 12, padding: '12px 14px', marginBottom: 14,
+      }}>
+        <div style={{ fontSize: 11, fontWeight: 600, color: '#8a9a8a', marginBottom: 8 }}>
+          💬 Tell me what you have or feel like…
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <input
+            ref={naturalInputRef}
+            value={naturalText}
+            onChange={e => setNaturalText(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter' && naturalText.trim() && !naturalMeal?.loading) {
+                onNaturalRequest?.(naturalText)
+              }
+            }}
+            placeholder={`e.g. "I have paneer and dal, I'm short on time"`}
+            style={{
+              flex: 1, padding: '8px 12px', borderRadius: 8,
+              border: '1.5px solid #e8dfd0', fontSize: 13,
+              color: '#1c2b1c', background: '#faf9f7', outline: 'none',
+            }}
+          />
+          <button
+            onClick={() => { if (naturalText.trim()) onNaturalRequest?.(naturalText) }}
+            disabled={!naturalText.trim() || naturalMeal?.loading}
+            style={{
+              padding: '8px 14px', borderRadius: 8,
+              border: '1.5px solid #c8a8e0',
+              background: naturalMeal?.loading ? '#f0e8f8' : '#6b3fa0',
+              color: '#fff', fontSize: 13, fontWeight: 600,
+              cursor: naturalMeal?.loading ? 'wait' : 'pointer',
+              flexShrink: 0,
+            }}
+          >
+            {naturalMeal?.loading ? '⏳' : '✨'}
+          </button>
+        </div>
+
+        {/* Natural meal result */}
+        {naturalMeal?.result && (
+          <div style={{
+            marginTop: 10, background: '#f8f0ff',
+            border: '1.5px solid #c8a8e0', borderRadius: 10,
+            padding: '10px 12px', display: 'flex', alignItems: 'flex-start', gap: 8,
+          }}>
+            <span style={{ fontSize: 14, flexShrink: 0 }}>✨</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#6b3fa0', marginBottom: 2 }}>
+                {options[naturalMeal.result.index]?.name?.split('(')[0]?.trim()}
+              </div>
+              <div style={{ fontSize: 11, color: '#7a5aaa', lineHeight: 1.5 }}>
+                {naturalMeal.result.reason}
+              </div>
+            </div>
+            <button
+              onClick={() => { onPick(naturalMeal.result.index); setNaturalText(''); naturalMeal.clear() }}
+              style={{
+                padding: '4px 12px', borderRadius: 8,
+                border: '1.5px solid #c8a8e0', background: '#6b3fa0',
+                color: '#fff', fontSize: 11, fontWeight: 700,
+                cursor: 'pointer', flexShrink: 0,
+              }}
+            >
+              Pick it
+            </button>
+          </div>
+        )}
+
+        {naturalMeal?.error && (
+          <div style={{ marginTop: 8, fontSize: 11, color: '#c0392b' }}>
+            ⚠️ {naturalMeal.error}
+          </div>
+        )}
+      </div>
 
       {/* Filters */}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14, alignItems: 'center' }}>

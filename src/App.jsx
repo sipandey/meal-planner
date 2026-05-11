@@ -8,6 +8,7 @@ import { useDayPlan, todayISO } from './hooks/useDayPlan'
 import { useProfile } from './hooks/useProfile'
 import { useConstraints } from './hooks/useConstraints'
 import { useAISuggestion } from './hooks/useAISuggestion'
+import { useNaturalMeal } from './hooks/useNaturalMeal'
 import { useIsMobile } from './hooks/useIsMobile'
 import { calculateMacroTargets, DEFAULT_TARGETS } from './data/macroTargets'
 
@@ -44,6 +45,9 @@ export default function App() {
   // ── AI Meal Suggestion ─────────────────────────────────────────
   const { suggestions, loading: aiLoading, error: aiError, suggestForSlot, suggestAll, clearSuggestion } =
     useAISuggestion({ picks, profile, dailyTargets: targets, getViolations })
+
+  // ── Natural language meal request ──────────────────────────────
+  const naturalMeal = useNaturalMeal({ picks, profile, dailyTargets: targets })
 
   // ── Running macro totals ───────────────────────────────────────
   const totals = useMemo(() =>
@@ -156,12 +160,14 @@ export default function App() {
       picked={picks[activeSlot]}
       filters={filters}
       setFilters={setFilters}
-      onPick={(idx) => { pick(activeSlot, idx); clearSuggestion(activeSlot) }}
+      onPick={(idx) => { pick(activeSlot, idx); clearSuggestion(activeSlot); naturalMeal.clear() }}
       getViolations={(idx) => getViolations(activeSlot, idx)}
       aiSuggestion={suggestions[activeSlot]}
       aiLoading={aiLoading[activeSlot]}
       aiError={aiError[activeSlot]}
       onAISuggest={() => suggestForSlot(activeSlot)}
+      naturalMeal={naturalMeal}
+      onNaturalRequest={(text) => naturalMeal.request(activeSlot, text)}
       isMobile={isMobile}
     />
   )
