@@ -84,7 +84,7 @@ function ViolationBadge({ violations }) {
   )
 }
 
-export default function SlotPanel({ slot, options, picked, filters, setFilters, onPick, getViolations, aiSuggestion, aiLoading, aiError, onAISuggest, naturalMeal, onNaturalRequest, isMobile }) {
+export default function SlotPanel({ slot, options, picked, filters, setFilters, onPick, getViolations, aiSuggestion, aiLoading, aiError, onAISuggest, naturalMeal, onNaturalRequest, isMobile, readOnly }) {
   const { tag, search } = filters
   const [naturalText, setNaturalText] = useState('')
   const naturalInputRef = useRef(null)
@@ -295,7 +295,7 @@ export default function SlotPanel({ slot, options, picked, filters, setFilters, 
           return (
             <div
               key={i}
-              onClick={() => onPick(realIdx)}
+              onClick={() => !readOnly && onPick(realIdx)}
               style={{
                 background: isSelected ? '#edf5ea' : isAIRecommended ? '#f8f0ff' : hasHard ? '#fdf8f8' : '#fff',
                 border: isSelected

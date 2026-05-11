@@ -27,7 +27,7 @@ function MacroBar({ label, value, min, max, color }) {
   )
 }
 
-export default function Summary({ picks, totals, targets, pickedCount, onClear, onSlotClick, profile, onAIFillDay, aiSuggestions, aiFilling }) {
+export default function Summary({ picks, totals, targets, pickedCount, onClear, onSlotClick, profile, onAIFillDay, aiSuggestions, aiFilling, readOnly }) {
   const t = targets ?? DEFAULT_TARGETS
 
   const allPicked = pickedCount === SLOTS.length
@@ -44,7 +44,7 @@ export default function Summary({ picks, totals, targets, pickedCount, onClear, 
   return (
     <div>
       {/* AI Fill Day button */}
-      {onAIFillDay && emptySlotCount > 0 && (
+      {onAIFillDay && emptySlotCount > 0 && !readOnly && (
         <button
           onClick={onAIFillDay}
           disabled={aiFilling}
@@ -192,7 +192,7 @@ export default function Summary({ picks, totals, targets, pickedCount, onClear, 
         ))}
       </div>
 
-      {pickedCount > 0 && (
+      {pickedCount > 0 && onClear && !readOnly && (
         <button onClick={onClear} style={{
           width: '100%', padding: '8px', borderRadius: 8,
           border: '1px solid #e8dfd0', background: '#fff',
